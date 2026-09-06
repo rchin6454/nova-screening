@@ -31,6 +31,7 @@ export default function ThinkingPage() {
           <DownloadPdfButton />
         </div>
 
+        <article id="thinking-content">
         <h2 className={h2}>How I approached this</h2>
         <p className={p}>
           I treated Nova as a goal seeking system. Any goal seeking system needs four things: a
@@ -148,6 +149,7 @@ export default function ThinkingPage() {
           nothing. A well explained score drawn from a poor conversation is a well explained wrong
           answer.
         </p>
+        </article>
 
         <Link
           href="/"
