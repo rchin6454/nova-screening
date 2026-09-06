@@ -189,48 +189,43 @@ export default function ThinkingPage() {
           <p className={p}>
             Five of twelve items across both role families point to Nova feeling scripted, rushed,
             or insufficiently tailored. These issues directly affect whether candidates can engage,
-            finish the conversation, and understand important information. The table rates these as{" "}
-            <strong>high-priority, must-have improvements</strong>, with medium effort for most
-            items.
+            finish the conversation, and understand important information. High-priority, must-have
+            improvements, with medium effort for most items.
           </p>
 
           <h3 className={h3}>2. Adaptive &amp; reactive interviewing — P2 in real life</h3>
           <p className={p}>
             Four items show that Nova follows the question flow rather than responding to what
             candidates actually say. Candidates can give vague answers, volunteer relevant
-            experience, or ask questions, but Nova often moves on without probing. This is a{" "}
-            <strong>high-impact, must-have area</strong>, but also high effort because it requires
-            Nova to interpret candidate responses and adapt the conversation.
+            experience, or ask questions, but Nova often moves on without probing. A high-impact,
+            must-have area, but also high effort because it requires Nova to interpret candidate
+            responses and adapt the conversation.
           </p>
 
           <h3 className={h3}>3. Engineering screening effectiveness — P2 in real life</h3>
           <p className={p}>
             The engineering screens have a measurable problem: their pass-to-next-round rate is
             lower than it was with human recruiters. However, the feedback does not establish
-            whether the problem is the questions, conversation quality, or assessment itself. The
-            table therefore treats this as a{" "}
-            <strong>diagnostic issue requiring more information</strong>, rather than recommending
-            an immediate product fix.
+            whether the problem is the questions, conversation quality, or assessment itself. A
+            diagnostic issue requiring more information, rather than an immediate product fix.
           </p>
 
           <h3 className={h3}>4. Scoring &amp; recruiter trust — P3 in real life, P1 in prototype</h3>
           <p className={p}>
             Recruiters do not have enough visibility into what drives Nova&apos;s confidence score,
             and there are examples where candidates later hired by recruiters received only a
-            medium score. The table identifies{" "}
-            <strong>scoring explanation as a small-effort, low-effort-for-assignment opportunity</strong>,
-            making it the highest-priority item to prototype even though the broader scoring/trust
-            theme is P3 for the real product.
+            medium score. Scoring explanation is a small-effort, low-effort-for-assignment
+            opportunity, making it the highest-priority item to prototype even though the broader
+            scoring/trust theme is P3 for the real product.
           </p>
 
           <h3 className={h3}>Business priority against prototype priority</h3>
           <p className={p}>
             The table separates what matters most for Nova&apos;s product from what is practical to
-            build in this assignment. <strong>Conversation quality &amp; candidate experience is the
-            P1 business priority</strong>, followed by adaptive/reactive interviewing. However, those
-            areas require more complex changes, while{" "}
-            <strong>scoring explanation is explicitly P1 for the prototype</strong> because it is a
-            smaller, more buildable feature.
+            build in this assignment. Conversation quality &amp; candidate experience is the{" "}
+            <strong>P1 business priority</strong>, followed by adaptive/reactive interviewing.
+            However, those areas require more complex changes, while scoring explanation is{" "}
+            <strong>P1 for the prototype</strong> because it is a smaller, more buildable feature.
           </p>
 
           <h2 className={h2}>Appendix A: Feedback Classification</h2>
@@ -267,13 +262,6 @@ export default function ThinkingPage() {
             </div>
           </div>
         </article>
-
-        <Link
-          href="/screening"
-          className="mt-12 inline-block text-sm font-medium text-[#6C3FD1] hover:underline print:hidden"
-        >
-          ← Back to Nova Screening
-        </Link>
       </div>
     </div>
   );

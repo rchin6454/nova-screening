@@ -273,13 +273,13 @@ export default function Home() {
           )}
           <Link
             href="/recruiter"
-            className="text-xs font-medium text-zinc-500 hover:text-[#6C3FD1] dark:text-zinc-400 dark:hover:text-[#a78bfa]"
+            className="rounded-full border border-[#6C3FD1] px-3 py-1.5 text-xs font-semibold text-[#6C3FD1] transition-colors hover:bg-[#6C3FD1] hover:text-white"
           >
             Recruiter view →
           </Link>
           <Link
             href="/"
-            className="text-xs font-medium text-zinc-500 hover:text-[#6C3FD1] dark:text-zinc-400 dark:hover:text-[#a78bfa]"
+            className="rounded-full border border-[#6C3FD1] px-3 py-1.5 text-xs font-semibold text-[#6C3FD1] transition-colors hover:bg-[#6C3FD1] hover:text-white"
           >
             Thinking →
           </Link>
