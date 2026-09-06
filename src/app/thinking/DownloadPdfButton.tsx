@@ -56,12 +56,38 @@ export default function DownloadPdfButton() {
         if (node.tagName === "H2") {
           ensureSpace(30);
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
+          doc.setFontSize(13);
           y += 14;
           doc.text(text.toUpperCase(), MARGIN, y);
-          y += 16;
+          y += 18;
+        } else if (node.tagName === "H3") {
+          ensureSpace(24);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          y += 6;
+          const lines: string[] = doc.splitTextToSize(text, CONTENT_WIDTH);
+          for (const line of lines) {
+            ensureSpace(15);
+            doc.text(line, MARGIN, y);
+            y += 15;
+          }
+          y += 2;
         } else if (node.tagName === "P") {
           writeParagraph(text);
+        } else if (node.tagName === "UL") {
+          for (const li of Array.from(node.querySelectorAll("li"))) {
+            const liText = li.textContent?.trim() ?? "";
+            if (!liText) continue;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            const lines: string[] = doc.splitTextToSize(`•  ${liText}`, CONTENT_WIDTH - 12);
+            for (const [idx, line] of lines.entries()) {
+              ensureSpace(16);
+              doc.text(line, MARGIN + (idx === 0 ? 0 : 12), y);
+              y += 16;
+            }
+          }
+          y += 6;
         }
       }
 

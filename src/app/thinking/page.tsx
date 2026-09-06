@@ -6,21 +6,17 @@ export const metadata = {
 };
 
 const h2 = "mt-10 mb-3 text-sm font-semibold uppercase tracking-wide text-[#6C3FD1]";
+const h3 = "mt-7 mb-2 text-base font-semibold text-[#1F1B2E]";
 const p = "mb-4 leading-[1.8]";
+const ul = "mb-4 list-disc space-y-2 pl-5 leading-[1.8]";
 
 const FEEDBACK_COLUMNS = [
   "S.No",
-  "Feedback Given",
-  "Underlying Ask",
+  "Feedback given",
+  "Underlying ask",
   "What does it mean for us?",
-  "What type of failure is it?",
-  "Type of Request",
-  "Classification",
-  "Impact",
-  "Effort to build",
-  "Effort to build for this assignment",
-  "Priority to build in IRL",
-  "Priority to build in prototype",
+  "Type of failure",
+  "Type of request",
 ] as const;
 
 const FEEDBACK_ITEMS: string[][] = [
@@ -31,12 +27,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "Candidates perceive Nova as scripted, which may reduce engagement.",
     "Speaking failure",
     "Conversation quality gap",
-    "Must have",
-    "Medium",
-    "Medium",
-    "High",
-    "P1",
-    "P2",
   ],
   [
     "2",
@@ -45,12 +35,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "Nova is moving through questions without establishing sufficient evidence.",
     "Reacting failure",
     "Conversation quality gap",
-    "Must have",
-    "High",
-    "High",
-    "High",
-    "P2",
-    "P3",
   ],
   [
     "3",
@@ -59,26 +43,14 @@ const FEEDBACK_ITEMS: string[][] = [
     "Users want Nova to adapt to candidate responses rather than follow a fixed flow.",
     "Reacting failure",
     "Conversation quality gap",
-    "Must have",
-    "High",
-    "High",
-    "High",
-    "P2",
-    "P3",
   ],
   [
     "4",
     "“We had a candidate hang up mid-call for a tutor role screen. When we checked the transcript, Nova had asked 3 questions back to back without giving them room to actually finish talking.”",
-    "I want Nova to listen and respond appropriately so that the candidate is also happy in responding",
+    "I want Nova to listen and respond appropriately so that the candidate is also happy in responding.",
     "Poor turn-taking can prevent candidates from fully expressing themselves.",
     "Listening failure",
     "Conversation quality gap",
-    "Must have",
-    "High",
-    "Medium",
-    "High",
-    "P1",
-    "P2",
   ],
   [
     "5",
@@ -87,12 +59,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "There is a trust gap in the confidence score, but the root cause is unclear.",
     "Need more info",
     "Diagnostic",
-    "Must have",
-    "Need more info",
-    "Need more info",
-    "Need more info",
-    "P3",
-    "P2",
   ],
   [
     "6",
@@ -101,12 +67,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "A single conversational style may not work across different candidate populations.",
     "Speaking failure",
     "Conversation quality gap",
-    "Must have",
-    "High",
-    "Medium",
-    "High",
-    "P1",
-    "P2",
   ],
   [
     "7",
@@ -115,12 +75,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "Important transparency information is not being communicated clearly enough.",
     "Speaking failure",
     "Conversation quality gap",
-    "Must have",
-    "High",
-    "Medium",
-    "High",
-    "P1",
-    "P2",
   ],
   [
     "8",
@@ -129,12 +83,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "Nova needs to become better at reacting to the candidate, rather than treating the interview as a one-way sequence of questions.",
     "Reacting failure",
     "Feature request",
-    "Good to have",
-    "Medium",
-    "Medium",
-    "High",
-    "P2",
-    "P3",
   ],
   [
     "9",
@@ -143,12 +91,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "Nova is missing valuable signals volunteered by candidates.",
     "Reacting failure",
     "Conversation quality gap",
-    "Must have",
-    "High",
-    "High",
-    "High",
-    "P2",
-    "P3",
   ],
   [
     "10",
@@ -157,12 +99,6 @@ const FEEDBACK_ITEMS: string[][] = [
     "There is a measurable engineering screening gap, but we don't yet know whether questions or conversation are responsible.",
     "Diagnostic",
     "Diagnostic",
-    "Must have",
-    "Need more info",
-    "Need more info",
-    "Need more info",
-    "P2",
-    "P2",
   ],
   [
     "11",
@@ -171,26 +107,14 @@ const FEEDBACK_ITEMS: string[][] = [
     "Delivery quality can affect whether candidates understand important information.",
     "Speaking failure",
     "Conversation quality gap",
-    "Must have",
-    "Medium",
-    "Medium",
-    "High",
-    "P1",
-    "P2",
   ],
   [
     "12",
     "“Can we get a summary sent to us not just as a score, but as 2-3 lines on why the candidate got that score? Right now we just see 'Medium confidence' and nothing else.”",
-    "I want Nova to explain the evidence behind its confidence score so I can understand and trust the assessment",
+    "I want Nova to explain the evidence behind its confidence score so I can understand and trust the assessment.",
     "Recruiters need evidence behind the score to trust and act on it.",
-    "Scoring Failure",
+    "Scoring failure",
     "Feature request",
-    "Must have",
-    "High",
-    "Small",
-    "Low",
-    "P3",
-    "P1",
   ],
 ];
 
@@ -218,128 +142,120 @@ export default function ThinkingPage() {
         </div>
 
         <article id="thinking-content">
-        <h2 className={h2}>How I approached this</h2>
-        <p className={p}>
-          Nova&apos;s goal is to replace the first round of screening a recruiter would otherwise
-          do. So the first question is not what Nova gets wrong. It is what a good recruiter
-          actually does on that call.
-        </p>
+          <h2 className={h2}>Part 1: Triage and Synthesis</h2>
+          <p className={p}>Twelve items, three themes.</p>
 
-        <h2 className={h2}>What the traditional call looks like</h2>
-        <p className={p}>
-          A recruiter finds a profile and calls. She introduces herself and the role. She asks
-          whether it is a good time. She asks whether the candidate is looking. She states the
-          company, the location and the work arrangement, and asks whether the candidate is
-          interested. Only then does she ask about experience.
-        </p>
-        <p className={p}>
-          Throughout, she is tracking two things at once. The content of the answers, and a
-          running list of disqualifiers: not a good time, not looking, already holds an offer,
-          will not move on location, will not move on salary.
-        </p>
-        <p className={p}>
-          The difference between a senior and a junior recruiter is what happens next. A senior
-          recruiter hears a technology or a project and probes it. She draws the line between what
-          the candidate has done and what the role needs. A junior recruiter reads from the script
-          and judges on tone and confidence.
-        </p>
-        <p className={p}>
-          That distinction matters more than it first appears. A junior recruiter passes
-          candidates who sound confident, because confidence is the only signal they can read.
-          This is also the default behaviour of a language model. A fluent answer reads as a
-          strong answer. Nova, left alone, screens like a junior recruiter.
-        </p>
+          <h3 className={h3}>1. Conversation quality and candidate experience — items 1, 4, 6, 7, 11</h3>
+          <ul className={ul}>
+            <li>Nova feels scripted, rushed, and the same regardless of role.</li>
+            <li>The failures are naturalness, pacing, turn-taking, tone and transparency.</li>
+            <li>Largest cluster, both role families, every call. P1 in real life.</li>
+            <li>Implication: fix how Nova conducts the conversation, not what it asks.</li>
+          </ul>
 
-        <h2 className={h2}>Themes</h2>
-        <p className={p}>The twelve items fall into three groups.</p>
-        <p className={p}>
-          <strong>Speaking and listening.</strong> Items 1, 4, 6, 7 and 11. Nova sounds scripted,
-          asks several questions in one breath, sounds the same regardless of role, glosses the
-          consent line, and rushes the close. The underlying need is that a candidate will not
-          open up to something that is not listening.
-        </p>
-        <p className={p}>
-          <strong>Reacting and probing.</strong> Items 2, 3, 8 and 9. Nova does not push on vague
-          answers, does not follow up on what the candidate just said, and cannot handle a
-          question asked back. The underlying need is the senior recruiter behaviour described
-          above.
-        </p>
-        <p className={p}>
-          <strong>Scoring.</strong> Items 5, 10 and 12. The score is unexplained and possibly
-          wrong. The underlying need is a decision the recruiter can audit.
-        </p>
-        <p className={p}>
-          The three groups are not independent. A conversation that does not probe cannot produce
-          a score worth trusting. Group three is where the failure is noticed. Groups one and two
-          are where it is caused.
-        </p>
+          <h3 className={h3}>2. Adaptive and reactive interviewing — items 2, 3, 8, 9</h3>
+          <ul className={ul}>
+            <li>Nova follows its question flow instead of the candidate.</li>
+            <li>
+              It does not probe vague answers, explore volunteered experience, or handle questions
+              back.
+            </li>
+            <li>Matters most in engineering screens, where depth is the signal.</li>
+            <li>Implication: move from a fixed sequence to response-driven follow-ups.</li>
+          </ul>
 
-        <h2 className={h2}>Priorities</h2>
-        <p className={p}>
-          <strong>First, speaking and listening.</strong> Items 1, 4, 6, 7 and 11. This is the
-          highest impact group, and it is also the cheapest place to iterate. The feedback loops
-          are short. Define a persona. Check whether there is a pause before Nova speaks again.
-          Listen to one call. You know within a single conversation whether a change worked.
-        </p>
-        <p className={p}>
-          That distinction matters. Speaking is high effort to build, because it lives in the
-          voice layer. But it is low effort to know whether you got it right. Scoring is the
-          opposite: cheap to build, and impossible to verify without hiring outcomes. Those are
-          two different kinds of effort and they should not be added together.
-        </p>
-        <p className={p}>
-          <strong>Second, reacting and probing.</strong> Items 2, 3, 8 and 9. Nova has to decide on
-          the fly what a good follow up is. That is a much larger piece of work than adjusting how
-          it sounds.
-        </p>
-        <p className={p}>
-          <strong>Third, the score summary.</strong> Items 5 and 12. Small impact, small effort,
-          and ranked last deliberately.
-        </p>
-        <p className={p}>
-          The summary is a trust artefact, not a correctness fix. If the score is right, the
-          recruiter does not strictly need the explanation. It buys confidence in the output. It
-          does not make the output better.
-        </p>
-        <p className={p}>
-          And there is a more basic reason it ranks below the speaking work. Nova&apos;s core job
-          is to hold a conversation. If that is not working, everything downstream sits on
-          nothing. A well explained score drawn from a poor conversation is a well explained wrong
-          answer.
-        </p>
+          <h3 className={h3}>3. Scoring and recruiter trust — items 5, 10, 12</h3>
+          <ul className={ul}>
+            <li>
+              Recruiters do not trust or understand the confidence score. Engineering screens
+              underperform human-led ones.
+            </li>
+            <li>Items 5 and 10 are diagnostic. We know there is a problem, not why.</li>
+            <li>
+              Item 12 is buildable, and it addresses the trust half by showing the evidence.
+            </li>
+            <li>
+              Implication: make scoring explainable, then use that visibility to diagnose the
+              rest.
+            </li>
+          </ul>
 
-        <h2 className={h2}>The feedback</h2>
-        <p className={p}>The twelve raw items referenced by number throughout this page.</p>
-        <div className="mb-4 overflow-x-auto rounded-md border border-[#6C3FD1]/20">
-          <table className="min-w-[1600px] border-collapse text-left text-xs leading-relaxed">
-            <thead>
-              <tr className="bg-[#6C3FD1]/10">
-                {FEEDBACK_COLUMNS.map((col) => (
-                  <th
-                    key={col}
-                    className="border-b border-[#6C3FD1]/20 px-3 py-2 font-semibold uppercase tracking-wide text-[#6C3FD1]"
-                  >
-                    {col}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {FEEDBACK_ITEMS.map((row, i) => (
-                <tr key={i} className={i % 2 === 1 ? "bg-[#6C3FD1]/5" : undefined}>
-                  {row.map((cell, j) => (
-                    <td
-                      key={j}
-                      className="max-w-[260px] border-b border-[#6C3FD1]/10 px-3 py-2 align-top"
+          <h3 className={h3}>Takeaway</h3>
+          <p className={p}>
+            The gap is between Nova as a screening workflow and Nova as a good recruiter. A good
+            recruiter does not just ask the next question. They listen, adapt, probe, and
+            communicate naturally. The opportunity is to improve the conversation while making the
+            assessment understandable.
+          </p>
+
+          <h2 className={h2}>Part 2: Prioritisation</h2>
+
+          <h3 className={h3}>1. Conversation quality — P1 in real life</h3>
+          <p className={p}>
+            Five of twelve items, both role families, every call. These decide whether a candidate
+            opens up and finishes the screen, which is Nova&apos;s core value. High impact, medium
+            effort, and far more actionable than changing the scoring model.
+          </p>
+
+          <h3 className={h3}>2. Adaptive and reactive interviewing — P2 in real life</h3>
+          <p className={p}>
+            Nova misses evidence when candidates are vague or volunteer something relevant. A
+            human recruiter probes these, and the absence may explain the weaker engineering
+            screens. Harder than fixing delivery, because Nova must interpret the answer and
+            decide what to ask next. High priority for the product, not the first thing to build.
+          </p>
+
+          <h3 className={h3}>3. Scoring and recruiter trust — P3 in real life, first as a prototype</h3>
+          <p className={p}>
+            Potentially the highest business cost, since a wrong assessment rejects a strong
+            candidate or advances a weak one. But the feedback does not say whether the score is
+            wrong, the evidence was thin, or the interview caused it. So I would not change the
+            scoring model. I would make the score explainable first. Smaller, buildable, and it
+            diagnoses the deeper problem.
+          </p>
+
+          <h3 className={h3}>Business priority against prototype priority</h3>
+          <p className={p}>
+            My number one business priority is conversation quality. I am not building it, because
+            the brief excludes voice.
+          </p>
+          <p className={p}>
+            The next buildable opportunity is scoring explainability: take the candidate&apos;s
+            responses and the job requirements, produce a confidence score, and show the evidence
+            behind it.
+          </p>
+
+          <h2 className={h2}>Appendix A: Feedback Classification</h2>
+          <div className="mb-4 overflow-x-auto rounded-md border border-[#6C3FD1]/20">
+            <table className="min-w-[1100px] border-collapse text-left text-xs leading-relaxed">
+              <thead>
+                <tr className="bg-[#6C3FD1]/10">
+                  {FEEDBACK_COLUMNS.map((col) => (
+                    <th
+                      key={col}
+                      className="border-b border-[#6C3FD1]/20 px-3 py-2 font-semibold uppercase tracking-wide text-[#6C3FD1]"
                     >
-                      {cell}
-                    </td>
+                      {col}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {FEEDBACK_ITEMS.map((row, i) => (
+                  <tr key={i} className={i % 2 === 1 ? "bg-[#6C3FD1]/5" : undefined}>
+                    {row.map((cell, j) => (
+                      <td
+                        key={j}
+                        className="max-w-[280px] border-b border-[#6C3FD1]/10 px-3 py-2 align-top"
+                      >
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </article>
 
         <Link
