@@ -36,7 +36,9 @@ type SummaryBadge =
 
 function scoreSummary(item: SessionListItem): SummaryBadge {
   if (item.status !== "completed") {
-    return { kind: "label", label: statusLabel(item.status), tone: "neutral" };
+    const label =
+      item.status === "active" && !item.candidate_replied ? "Not started" : statusLabel(item.status);
+    return { kind: "label", label, tone: "neutral" };
   }
   if (item.error_state) {
     return { kind: "label", label: "Scoring error", tone: "danger" };

@@ -36,6 +36,7 @@ export interface SessionListItem {
   score_version: number | null;
   insufficient_evidence: boolean | null;
   error_state: boolean | null;
+  candidate_replied: boolean;
 }
 
 export interface Message {

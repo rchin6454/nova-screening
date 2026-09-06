@@ -21,7 +21,10 @@ export async function GET() {
       latest_score.rationale,
       latest_score.version AS score_version,
       latest_score.insufficient_evidence,
-      latest_score.error_state
+      latest_score.error_state,
+      EXISTS(
+        SELECT 1 FROM messages WHERE messages.session_id = s.id AND messages.role = 'user'
+      ) AS candidate_replied
     FROM sessions s
     JOIN roles r ON r.id = s.role_id
     LEFT JOIN LATERAL (
