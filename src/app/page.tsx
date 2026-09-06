@@ -277,6 +277,12 @@ export default function Home() {
           >
             Recruiter view →
           </Link>
+          <Link
+            href="/thinking"
+            className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Thinking →
+          </Link>
         </div>
       </header>
 
