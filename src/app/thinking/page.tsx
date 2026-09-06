@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DownloadPdfButton from "./DownloadPdfButton";
 
 export const metadata = {
   title: "Thinking and Understanding",
@@ -9,13 +10,26 @@ const p = "mb-4 leading-[1.8]";
 
 export default function ThinkingPage() {
   return (
-    <div className="min-h-screen bg-[#F7F5FC]">
+    <div className="min-h-screen bg-[#F7F5FC] print:bg-white">
       <div className="mx-auto max-w-[720px] px-6 py-16 text-[17px] text-[#1F1B2E]">
-        <Link href="/" className="text-sm font-medium text-[#6C3FD1] hover:underline">
+        <Link
+          href="/"
+          className="text-sm font-medium text-[#6C3FD1] hover:underline print:hidden"
+        >
           ← Back to Nova Screening
         </Link>
 
-        <h1 className="mb-8 mt-6 text-3xl font-semibold leading-tight">Thinking and Understanding</h1>
+        <h1 className="mb-5 mt-6 text-3xl font-semibold leading-tight">Thinking and Understanding</h1>
+
+        <div className="mb-10 flex flex-wrap items-center gap-3 print:hidden">
+          <Link
+            href="/"
+            className="rounded-full bg-[#6C3FD1] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#5c33b3]"
+          >
+            Try the prototype →
+          </Link>
+          <DownloadPdfButton />
+        </div>
 
         <h2 className={h2}>How I approached this</h2>
         <p className={p}>
@@ -268,7 +282,10 @@ export default function ThinkingPage() {
           message density, which is honest but not the same thing.
         </p>
 
-        <Link href="/" className="mt-12 inline-block text-sm font-medium text-[#6C3FD1] hover:underline">
+        <Link
+          href="/"
+          className="mt-12 inline-block text-sm font-medium text-[#6C3FD1] hover:underline print:hidden"
+        >
           ← Back to Nova Screening
         </Link>
       </div>
