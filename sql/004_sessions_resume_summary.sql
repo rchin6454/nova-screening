@@ -1,0 +1,2 @@
+ALTER TABLE sessions DROP COLUMN IF EXISTS resume_url;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS resume_summary TEXT;

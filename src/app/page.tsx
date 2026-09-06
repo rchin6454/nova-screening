@@ -1,69 +1,292 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import {
+  NetworkError,
+  createSession,
+  endSession,
+  getSession,
+  giveConsent,
+  listMessages,
+  listRoles,
+  sendMessage,
+} from "@/lib/api";
+import type { Message, Role, Session, SessionStatus } from "@/lib/types";
+import RoleSelector from "@/components/screening/RoleSelector";
+import ConsentScreen from "@/components/screening/ConsentScreen";
+import RefusedScreen from "@/components/screening/RefusedScreen";
+import ChatPanel from "@/components/screening/ChatPanel";
+
+function inactiveReason(status: SessionStatus): string {
+  switch (status) {
+    case "completed":
+      return "This screening has ended. Thank you for your time!";
+    case "consent_refused":
+      return "The candidate declined the AI screen.";
+    case "abandoned":
+      return "This screening was abandoned.";
+    default:
+      return "This screening is no longer active.";
+  }
+}
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(true);
+
+  const [session, setSession] = useState<Session | null>(null);
+  const [startLoading, setStartLoading] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const [consentLoading, setConsentLoading] = useState<"accept" | "decline" | null>(null);
+  const [consentError, setConsentError] = useState<string | null>(null);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState<string | null>(null);
+
+  const [ending, setEnding] = useState(false);
+
+  useEffect(() => {
+    listRoles()
+      .then((res) => setRoles(res.data.roles ?? []))
+      .catch(() => setStartError("Could not load roles. Refresh to try again."))
+      .finally(() => setRolesLoading(false));
+  }, []);
+
+  function resetToRoleSelector(noticeMessage?: string) {
+    setSession(null);
+    setMessages([]);
+    setConsentError(null);
+    setSendError(null);
+    setNotice(noticeMessage ?? null);
+  }
+
+  async function handleStart(roleId: string, candidateName: string) {
+    setStartLoading(true);
+    setStartError(null);
+    try {
+      const res = await createSession(roleId, candidateName);
+      if (res.status === 201) {
+        setSession(res.data.session);
+        return;
+      }
+      if (res.status === 404) {
+        setStartError("That role no longer exists. Please choose another.");
+        listRoles().then((r) => setRoles(r.data.roles ?? []));
+        return;
+      }
+      setStartError(res.data.error ?? "Could not start the session, try again.");
+    } catch {
+      setStartError("Network error, please try again.");
+    } finally {
+      setStartLoading(false);
+    }
+  }
+
+  async function handleAccept() {
+    if (!session) return;
+    setConsentLoading("accept");
+    setConsentError(null);
+    try {
+      const res = await giveConsent(session.id, true);
+      if (res.status === 200) {
+        setSession(res.data.session);
+        if (res.data.greeting) setMessages([res.data.greeting]);
+        return;
+      }
+      if (res.status === 502) {
+        setConsentError(res.data.error ?? "Could not start the screen, try again.");
+        return;
+      }
+      if (res.status === 409) {
+        const fresh = await getSession(session.id);
+        if (fresh.status === 200) setSession(fresh.data.session);
+        return;
+      }
+      if (res.status === 404) {
+        resetToRoleSelector("That session no longer exists. Please start again.");
+        return;
+      }
+      setConsentError(res.data.error ?? "Something went wrong, try again.");
+    } catch {
+      setConsentError("Could not start the screen, try again.");
+    } finally {
+      setConsentLoading(null);
+    }
+  }
+
+  async function handleDecline() {
+    if (!session) return;
+    setConsentLoading("decline");
+    setConsentError(null);
+    try {
+      const res = await giveConsent(session.id, false);
+      if (res.status === 200) {
+        setSession(res.data.session);
+        return;
+      }
+      if (res.status === 409) {
+        const fresh = await getSession(session.id);
+        if (fresh.status === 200) setSession(fresh.data.session);
+        return;
+      }
+      if (res.status === 404) {
+        resetToRoleSelector("That session no longer exists. Please start again.");
+        return;
+      }
+      setConsentError(res.data.error ?? "Something went wrong, try again.");
+    } catch {
+      setConsentError("Network error, please try again.");
+    } finally {
+      setConsentLoading(null);
+    }
+  }
+
+  async function handleSend(content: string) {
+    if (!session) return;
+    setSending(true);
+    setSendError(null);
+
+    try {
+      const res = await sendMessage(session.id, content);
+      if (res.status === 200) {
+        setMessages((prev) => [...prev, res.data.message, res.data.reply]);
+        setSession(res.data.session);
+        return;
+      }
+      if (res.status === 409) {
+        const fresh = await getSession(session.id);
+        if (fresh.status === 200) setSession(fresh.data.session);
+        return;
+      }
+      if (res.status === 400) {
+        setSendError("Something went wrong sending that message. Please try again.");
+        return;
+      }
+      if (res.status === 502) {
+        setSendError("Nova did not get back to you, try sending your next message.");
+        const fresh = await listMessages(session.id);
+        if (fresh.status === 200) setMessages(fresh.data.messages);
+        return;
+      }
+      setSendError(res.data.error ?? "Something went wrong, try again.");
+    } catch {
+      setSendError("Network error, please try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleEnd() {
+    if (!session) return;
+    setEnding(true);
+    setMessageError(null);
+    try {
+      const res = await endSession(session.id);
+      if (res.status === 200 || res.status === 409) {
+        const fresh = await getSession(session.id);
+        if (fresh.status === 200) setSession(fresh.data.session);
+      } else if (res.status === 404) {
+        resetToRoleSelector("That session no longer exists. Please start again.");
+      } else {
+        setMessageError(res.data.error ?? "Could not end the screening, try again.");
+      }
+    } catch (err) {
+      if (err instanceof NetworkError) {
+        const fresh = await getSession(session.id);
+        if (fresh.status === 200) setSession(fresh.data.session);
+      }
+    } finally {
+      setEnding(false);
+    }
+  }
+
+  const roleName = session ? roles.find((r) => r.id === session.role_id)?.name ?? "" : "";
+
+  let mainContent: React.ReactNode;
+
+  if (!session) {
+    mainContent = rolesLoading ? (
+      <p className="text-sm text-zinc-500">Loading roles…</p>
+    ) : (
+      <RoleSelector roles={roles} loading={startLoading} error={startError} onStart={handleStart} />
+    );
+  } else if (session.status === "awaiting_consent") {
+    mainContent = (
+      <ConsentScreen
+        candidateName={session.candidate_name}
+        roleName={roleName}
+        loading={consentLoading}
+        error={consentError}
+        onAccept={handleAccept}
+        onDecline={handleDecline}
+      />
+    );
+  } else if (session.status === "consent_refused") {
+    mainContent = (
+      <RefusedScreen
+        candidateName={session.candidate_name}
+        onStartNew={() => resetToRoleSelector()}
+      />
+    );
+  } else {
+    const active = session.status === "active";
+    mainContent = (
+      <div className="flex flex-col gap-4">
+        <div className="h-[65vh]">
+          <ChatPanel
+            messages={messages}
+            inputEnabled={active}
+            disabledReason={active ? null : inactiveReason(session.status)}
+            sending={sending}
+            sendError={sendError}
+            onSend={handleSend}
+            endButton={active ? { onClick: handleEnd, loading: ending } : null}
+          />
+        </div>
+        {messageError && (
+          <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+            {messageError}
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-black">
+      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+        <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Nova Screening</span>
+        <div className="flex items-center gap-4">
+          {session && (
+            <button
+              type="button"
+              onClick={() => resetToRoleSelector()}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+            >
+              New session
+            </button>
+          )}
+          <Link
+            href="/recruiter"
+            className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Recruiter view →
+          </Link>
         </div>
-      </main>
+      </header>
+
+      {notice && (
+        <div className="border-b border-amber-200 bg-amber-50 px-6 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300">
+          {notice}
+        </div>
+      )}
+
+      <main className="mx-auto w-full max-w-2xl flex-1 p-6">{mainContent}</main>
     </div>
   );
 }

@@ -1,0 +1,341 @@
+{
+  "info": {
+    "_postman_id": "6f2a3c10-6e7b-4c2e-9a8a-nova-screening-api",
+    "name": "Nova Screening API",
+    "description": "API contract for the Nova AI screening prototype.\n\n**Base URL**: `{{base_url}}` (default `http://localhost:3000`)\n\n**Auth**: none. This is a prototype with no authentication layer.\n\n**Data model**\n- `roles`: job openings (`engineering` or `frontline` family)\n- `sessions`: one screening call per candidate, lifecycle: `awaiting_consent` → `active` → `completed` (or `consent_refused` / `abandoned`)\n- `messages`: the conversation transcript (`assistant` = Nova, `user` = candidate)\n- `scores`: one or more versions per session (never overwritten — rescoring appends `version + 1`)\n- `events`: append-only audit log, one row per lifecycle transition\n\n**Score enforcement**: the backend clamps `score` to `\"low\"` whenever the model's own output has a non-empty `blocking_constraints` array or `insufficient_evidence: true`, regardless of what the model returned. This is a server-side guard, not just a prompt instruction — see `score_generated` events for an `score_overridden` flag when this fires.\n\n**Model-dependent routes** (consent greeting, message reply, end/rescore scoring) call OpenAI live and return `502` with the upstream error message on failure (e.g. no API credits). They never leave a session in a partially-updated state — status only transitions after the model call succeeds.\n\n**Event types**: `session_started`, `consent_given`, `consent_refused`, `message_sent`, `session_ended`, `score_generated`, `insufficient_evidence_flagged`, `blocking_constraint_detected`.\n\n**Score schema** (`score_generated` events and the `scores` table):\n```json\n{\n  \"score\": \"high\" | \"medium\" | \"low\",\n  \"rationale\": \"2-3 sentences\",\n  \"dimensions\": {\n    \"communication\": { \"rating\": \"strong|adequate|weak|not_assessed\", \"evidence\": \"...\" },\n    \"role_relevant_experience\": { \"rating\": \"...\", \"evidence\": \"...\" },\n    \"motivation_and_fit\": { \"rating\": \"...\", \"evidence\": \"...\" },\n    \"availability_constraints\": { \"rating\": \"...\", \"evidence\": \"...\" }\n  },\n  \"blocking_constraints\": [\"...\"],\n  \"time_sensitive_flags\": [\"...\"],\n  \"insufficient_evidence\": false,\n  \"unasked_areas\": [\"...\"]\n}\n```\nOn scoring failure (malformed JSON after one retry, or the model call itself throwing), the row instead has `error_state: true`, all score fields `null`, and `raw_response` holding whatever the model last returned.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+    { "key": "role_id", "value": "7b7fd354-c730-429b-9977-b9df1953f501", "type": "string", "description": "Defaults to the seeded 'Senior Software Engineer' role. Overwritten automatically by 'List Roles'." },
+    { "key": "session_id", "value": "", "type": "string", "description": "Set automatically by 'Create Session'." }
+  ],
+  "item": [
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "List Roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.roles && json.roles.length > 0) {",
+                  "  pm.collectionVariables.set('role_id', json.roles[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "roles"]
+            },
+            "description": "Lists every seeded role.\n\n**Response 200**\n```json\n{\n  \"roles\": [\n    {\n      \"id\": \"uuid\",\n      \"name\": \"Senior Software Engineer\",\n      \"role_family\": \"engineering\" | \"frontline\",\n      \"description\": \"text injected into the conversation system prompt\",\n      \"created_at\": \"ISO timestamp\"\n    }\n  ]\n}\n```\nSets `{{role_id}}` to the first role returned."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/api/roles", "host": ["{{base_url}}"], "path": ["api", "roles"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"roles\": [\n    {\n      \"id\": \"7b7fd354-c730-429b-9977-b9df1953f501\",\n      \"name\": \"Senior Software Engineer\",\n      \"role_family\": \"engineering\",\n      \"description\": \"Senior Software Engineer role. The team builds distributed systems in Go and TypeScript...\",\n      \"created_at\": \"2026-09-05T12:56:40.642Z\"\n    },\n    {\n      \"id\": \"7e3db9da-072b-49df-9544-8f8edeb73408\",\n      \"name\": \"Math Tutor\",\n      \"role_family\": \"frontline\",\n      \"description\": \"Math Tutor role for grades 6 through 12...\",\n      \"created_at\": \"2026-09-05T12:56:40.885Z\"\n    },\n    {\n      \"id\": \"72545979-b76c-4d7f-81d9-b0e998f2be52\",\n      \"name\": \"Restaurant Manager\",\n      \"role_family\": \"frontline\",\n      \"description\": \"Restaurant Manager role overseeing a high-volume, full-service restaurant...\",\n      \"created_at\": \"2026-09-05T14:42:59.274Z\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "List Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"]
+            },
+            "description": "Lists every session, newest first, joined with role info and the latest score version (if any).\n\n**Response 200**\n```json\n{\n  \"sessions\": [\n    {\n      \"id\": \"uuid\",\n      \"candidate_name\": \"string\",\n      \"status\": \"awaiting_consent\" | \"active\" | \"completed\" | \"consent_refused\" | \"abandoned\",\n      \"created_at\": \"ISO timestamp\",\n      \"ended_at\": \"ISO timestamp | null\",\n      \"role_id\": \"uuid\",\n      \"role_name\": \"string\",\n      \"role_family\": \"engineering\" | \"frontline\",\n      \"score\": \"high\" | \"medium\" | \"low\" | null,\n      \"score_version\": \"number | null\",\n      \"insufficient_evidence\": \"boolean | null\",\n      \"error_state\": \"boolean | null\"\n    }\n  ]\n}\n```\n`score` and related fields are `null` when the session has no score yet. When a session has been rescored, this reflects only the highest `version`, not all of them — use `GET /api/sessions/:id/score` for the full version history."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "if (json.session && json.session.id) {",
+                  "  pm.collectionVariables.set('session_id', json.session.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role_id\": \"{{role_id}}\",\n  \"candidate_name\": \"Jamie Rivera\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions"]
+            },
+            "description": "Creates a new session in `awaiting_consent` status. Logs a `session_started` event.\n\n**Request body**\n```json\n{ \"role_id\": \"uuid\", \"candidate_name\": \"string\" }\n```\n\n**Response 201**\n```json\n{\n  \"session\": {\n    \"id\": \"uuid\",\n    \"role_id\": \"uuid\",\n    \"candidate_name\": \"string\",\n    \"status\": \"awaiting_consent\",\n    \"created_at\": \"ISO timestamp\",\n    \"ended_at\": null\n  }\n}\n```\n\n**Errors**\n- `400` — `role_id` or `candidate_name` missing\n- `404` — `role_id` does not exist\n\nSets `{{session_id}}` on success."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/api/sessions", "host": ["{{base_url}}"], "path": ["api", "sessions"] },
+                "body": { "mode": "raw", "raw": "{\n  \"role_id\": \"7b7fd354-c730-429b-9977-b9df1953f501\",\n  \"candidate_name\": \"Jamie Rivera\"\n}" }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"session\": {\n    \"id\": \"17ca7e2a-c22d-49c3-abf7-2144e35fba41\",\n    \"role_id\": \"7b7fd354-c730-429b-9977-b9df1953f501\",\n    \"candidate_name\": \"Jamie Rivera\",\n    \"status\": \"awaiting_consent\",\n    \"created_at\": \"2026-09-05T14:37:57.067Z\",\n    \"ended_at\": null\n  }\n}"
+            },
+            {
+              "name": "404 Role Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/api/sessions", "host": ["{{base_url}}"], "path": ["api", "sessions"] },
+                "body": { "mode": "raw", "raw": "{\n  \"role_id\": \"00000000-0000-0000-0000-000000000000\",\n  \"candidate_name\": \"Jamie Rivera\"\n}" }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{ \"error\": \"Role not found\" }"
+            }
+          ]
+        },
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}"]
+            },
+            "description": "Fetches one session plus its latest score version (or `null` if unscored).\n\n**Response 200**\n```json\n{\n  \"session\": {\n    \"id\": \"uuid\", \"role_id\": \"uuid\", \"candidate_name\": \"string\",\n    \"status\": \"...\", \"created_at\": \"...\", \"ended_at\": \"... | null\"\n  },\n  \"score\": { /* full score row, see Score schema in collection description */ } | null\n}\n```\n\n**Errors**: `404` — session not found."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Screening Flow",
+      "item": [
+        {
+          "name": "Give Consent (accept)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consent\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/consent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "consent"]
+            },
+            "description": "Records consent and, if accepted, calls the model to generate Nova's opening greeting. Only valid while the session is `awaiting_consent`.\n\n**Request body**\n```json\n{ \"consent\": true }\n```\n\n**On accept** — status → `active`, logs `consent_given` + `message_sent`, calls the conversation model:\n```json\n{\n  \"session\": { \"...\": \"...\", \"status\": \"active\" },\n  \"greeting\": {\n    \"id\": \"uuid\", \"session_id\": \"uuid\",\n    \"role\": \"assistant\", \"content\": \"Hi ..., this is Nova...\",\n    \"created_at\": \"ISO timestamp\"\n  }\n}\n```\n\n**Errors**\n- `400` — `consent` not a boolean\n- `404` — session not found\n- `409` — session is not in `awaiting_consent` status\n- `502` — the model call failed (e.g. `\"Failed to generate greeting: 429 You have no credits remaining...\"`). Session status is left untouched — safe to retry."
+          },
+          "response": [
+            {
+              "name": "502 Model Call Failed",
+              "originalRequest": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/api/sessions/{{session_id}}/consent", "host": ["{{base_url}}"], "path": ["api", "sessions", "{{session_id}}", "consent"] },
+                "body": { "mode": "raw", "raw": "{ \"consent\": true }" }
+              },
+              "status": "Bad Gateway",
+              "code": 502,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{ \"error\": \"Failed to generate greeting: 429 You have no credits remaining. Add credits to continue using the API at https://platform.openai.com/settings/organization/billing/.\" }"
+            }
+          ]
+        },
+        {
+          "name": "Give Consent (decline)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consent\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/consent",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "consent"]
+            },
+            "description": "Declines the AI screen. Status → `consent_refused`, `ended_at` set, logs `consent_refused`. No model call is made.\n\n**Response 200**\n```json\n{ \"session\": { \"...\": \"...\", \"status\": \"consent_refused\", \"ended_at\": \"ISO timestamp\" } }\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "messages"]
+            },
+            "description": "Returns the full message transcript in chronological order.\n\n**Response 200**\n```json\n{\n  \"messages\": [\n    { \"id\": \"uuid\", \"session_id\": \"uuid\", \"role\": \"assistant\" | \"user\", \"content\": \"string\", \"created_at\": \"ISO timestamp\" }\n  ]\n}\n```\n\n**Errors**: `404` — session not found."
+          },
+          "response": []
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"I've been working mostly with Python and Postgres for the last three years.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/messages",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "messages"]
+            },
+            "description": "Sends one candidate message and gets Nova's reply. Requires status `active`.\n\n**Request body**\n```json\n{ \"content\": \"string\" }\n```\n\n**Response 200**\n```json\n{\n  \"message\": { \"id\": \"uuid\", \"role\": \"user\", \"content\": \"string\", \"created_at\": \"...\" },\n  \"reply\": { \"id\": \"uuid\", \"role\": \"assistant\", \"content\": \"string\", \"created_at\": \"...\" }\n}\n```\nBoth turns are logged as separate `message_sent` events. If the model call fails, the candidate's message is still persisted (no assistant reply is fabricated) and the endpoint returns `502`.\n\n**Errors**\n- `400` — `content` missing or not a string\n- `404` — session not found\n- `409` — session is not `active`\n- `502` — model call failed"
+          },
+          "response": []
+        },
+        {
+          "name": "End Session (Score)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/end",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "end"]
+            },
+            "description": "Ends an `active` session: runs the scoring call against the full transcript, persists `version: 1`, transitions status → `completed`, logs `session_ended`.\n\nNo minimum message count is enforced — ending a very short conversation is expected to surface `insufficient_evidence: true`, clamped to `score: \"low\"` by the server-side consistency guard (see collection description).\n\nOn a malformed model response, retries once, then persists `error_state: true` with `raw_response` holding the raw output rather than crashing.\n\n**Response 200**\n```json\n{ \"score\": { /* full score row, see Score schema above */ } }\n```\n\n**Errors**\n- `404` — session not found\n- `409` — session is not `active`"
+          },
+          "response": [
+            {
+              "name": "200 OK — high score, no constraints",
+              "originalRequest": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/api/sessions/{{session_id}}/end", "host": ["{{base_url}}"], "path": ["api", "sessions", "{{session_id}}", "end"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"score\": {\n    \"id\": \"23bac411-8b94-4dcb-8cbc-1bdafc2ac19d\",\n    \"session_id\": \"5f4c59e5-2ab9-429f-b385-99e39deb00b7\",\n    \"version\": 1,\n    \"score\": \"high\",\n    \"rationale\": \"Maria gave a concrete, quantified account of handling a double call-out during a private event, clearly separating her own in-the-moment judgment from standard policy.\",\n    \"dimensions\": {\n      \"communication\": { \"rating\": \"strong\", \"evidence\": \"At my current restaurant we do about 300 covers on a Friday night.\" },\n      \"role_relevant_experience\": { \"rating\": \"strong\", \"evidence\": \"I re-sectioned the floor, pulled our strongest server onto the private event...\" },\n      \"motivation_and_fit\": { \"rating\": \"strong\", \"evidence\": \"I want to grow toward a multi-unit manager role eventually...\" },\n      \"availability_constraints\": { \"rating\": \"strong\", \"evidence\": \"I'd need to give my current employer two weeks' notice...\" }\n    },\n    \"blocking_constraints\": [],\n    \"time_sensitive_flags\": [\"two-week notice period\"],\n    \"insufficient_evidence\": false,\n    \"unasked_areas\": [],\n    \"error_state\": false,\n    \"raw_response\": \"...\",\n    \"created_at\": \"2026-09-05T14:43:50.531Z\"\n  }\n}"
+            },
+            {
+              "name": "200 OK — insufficient evidence (clamped to low)",
+              "originalRequest": {
+                "method": "POST",
+                "url": { "raw": "{{base_url}}/api/sessions/{{session_id}}/end", "host": ["{{base_url}}"], "path": ["api", "sessions", "{{session_id}}", "end"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"score\": {\n    \"score\": \"low\",\n    \"rationale\": \"The screen ended after a single, non-specific answer and an expressed lack of certainty about interest in the role. There isn't enough conversation to assess technical experience, communication under follow-up, or motivation.\",\n    \"dimensions\": {\n      \"communication\": { \"rating\": \"not_assessed\", \"evidence\": \"Uh, just some backend stuff, nothing too special.\" },\n      \"role_relevant_experience\": { \"rating\": \"not_assessed\", \"evidence\": \"Uh, just some backend stuff, nothing too special.\" },\n      \"motivation_and_fit\": { \"rating\": \"weak\", \"evidence\": \"Maybe, not sure yet.\" },\n      \"availability_constraints\": { \"rating\": \"not_assessed\", \"evidence\": \"Yeah, quickly, I only have a couple minutes.\" }\n    },\n    \"blocking_constraints\": [],\n    \"time_sensitive_flags\": [],\n    \"insufficient_evidence\": true,\n    \"unasked_areas\": [\n      \"technical depth on any named project\",\n      \"notice period and salary expectations\",\n      \"location or remote preference\",\n      \"reason for hesitance about the opportunity\"\n    ],\n    \"error_state\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Rescore Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/rescore",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "rescore"]
+            },
+            "description": "Re-runs scoring against the same transcript for a `completed` session, appending a new score version (does not overwrite prior versions or change session status). Useful when iterating on the scoring prompt against a fixed transcript.\n\n**Response 200**\n```json\n{ \"score\": { \"...\": \"...\", \"version\": 2 } }\n```\n\n**Errors**\n- `404` — session not found\n- `409` — session is not `completed` yet (must call `End Session` first)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Scoring & Audit",
+      "item": [
+        {
+          "name": "Get Score (all versions)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/score",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "score"]
+            },
+            "description": "Returns the latest score plus the full version history (useful for comparing rescores side by side).\n\n**Response 200**\n```json\n{\n  \"latest\": { /* score row */ } | null,\n  \"all_versions\": [ { /* score row, version 1 */ }, { /* version 2 */ }, ... ]\n}\n```\n`all_versions` is ordered newest-first. Empty array (and `latest: null`) if the session hasn't been scored yet.\n\n**Errors**: `404` — session not found."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/{{session_id}}/events",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "{{session_id}}", "events"]
+            },
+            "description": "Returns the full audit log for a session in chronological order — one row per lifecycle transition.\n\n**Response 200**\n```json\n{\n  \"events\": [\n    {\n      \"id\": \"uuid\", \"session_id\": \"uuid\",\n      \"event_type\": \"session_started\" | \"consent_given\" | \"consent_refused\" | \"message_sent\" | \"session_ended\" | \"score_generated\" | \"insufficient_evidence_flagged\" | \"blocking_constraint_detected\",\n      \"payload\": { /* event-specific, see below */ } | null,\n      \"created_at\": \"ISO timestamp\"\n    }\n  ]\n}\n```\n\n**Payload shapes by event_type**\n- `session_started`: `{ role_id, candidate_name }`\n- `message_sent`: `{ role: \"assistant\" | \"user\" }`\n- `score_generated`: `{ score, error: boolean, version, score_overridden: boolean }`\n- `insufficient_evidence_flagged`: `{ unasked_areas: string[] }`\n- `blocking_constraint_detected`: `{ constraint: string }`\n- `consent_given`, `consent_refused`, `session_ended`: `null`\n\n**Errors**: `404` — session not found."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/api/sessions/{{session_id}}/events", "host": ["{{base_url}}"], "path": ["api", "sessions", "{{session_id}}", "events"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"events\": [\n    { \"event_type\": \"session_started\", \"payload\": { \"role_id\": \"72545979-b76c-4d7f-81d9-b0e998f2be52\", \"candidate_name\": \"Maria Gutierrez\" } },\n    { \"event_type\": \"consent_given\", \"payload\": null },\n    { \"event_type\": \"message_sent\", \"payload\": { \"role\": \"assistant\" } },\n    { \"event_type\": \"message_sent\", \"payload\": { \"role\": \"user\" } },\n    { \"event_type\": \"score_generated\", \"payload\": { \"score\": \"high\", \"error\": false, \"version\": 1, \"score_overridden\": false } },\n    { \"event_type\": \"session_ended\", \"payload\": null }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
