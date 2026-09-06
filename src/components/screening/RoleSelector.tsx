@@ -73,7 +73,7 @@ export default function RoleSelector({
         type="button"
         disabled={!canStart}
         onClick={() => onStart(roleId, candidateName.trim())}
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className="rounded-md bg-[#6C3FD1] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#5c33b3] disabled:cursor-not-allowed disabled:opacity-40"
       >
         {loading ? "Starting…" : "Start screening"}
       </button>

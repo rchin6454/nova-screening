@@ -31,7 +31,7 @@ export default function RecruiterPage() {
         </span>
         <Link
           href="/screening"
-          className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+          className="text-xs font-medium text-zinc-500 hover:text-[#6C3FD1] dark:text-zinc-400 dark:hover:text-[#a78bfa]"
         >
           ← Candidate view
         </Link>
