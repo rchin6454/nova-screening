@@ -25,6 +25,18 @@ export default function DownloadPdfButton() {
         }
       };
 
+      const writeParagraph = (text: string) => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        const lines: string[] = doc.splitTextToSize(text, CONTENT_WIDTH);
+        for (const line of lines) {
+          ensureSpace(16);
+          doc.text(line, MARGIN, y);
+          y += 16;
+        }
+        y += 6;
+      };
+
       const title = document.querySelector("h1")?.textContent ?? "Thinking and Understanding";
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
@@ -36,6 +48,8 @@ export default function DownloadPdfButton() {
       const nodes = content ? Array.from(content.children) : [];
 
       for (const node of nodes) {
+        if (node.tagName === "TABLE" || node.querySelector?.("table")) continue;
+
         const text = node.textContent?.trim() ?? "";
         if (!text) continue;
 
@@ -46,16 +60,34 @@ export default function DownloadPdfButton() {
           y += 14;
           doc.text(text.toUpperCase(), MARGIN, y);
           y += 16;
-        } else {
-          doc.setFont("helvetica", "normal");
+        } else if (node.tagName === "P") {
+          writeParagraph(text);
+        }
+      }
+
+      const table = content?.querySelector("table");
+      if (table) {
+        const headerCells = Array.from(table.querySelectorAll("thead th")).map(
+          (el) => el.textContent?.trim() ?? ""
+        );
+        const rows = Array.from(table.querySelectorAll("tbody tr")).map((tr) =>
+          Array.from(tr.querySelectorAll("td")).map((el) => el.textContent?.trim() ?? "")
+        );
+
+        for (const row of rows) {
+          ensureSpace(24);
+          doc.setFont("helvetica", "bold");
           doc.setFontSize(11);
-          const lines: string[] = doc.splitTextToSize(text, CONTENT_WIDTH);
-          for (const line of lines) {
-            ensureSpace(16);
-            doc.text(line, MARGIN, y);
-            y += 16;
+          doc.text(`Item ${row[0]}`, MARGIN, y);
+          y += 16;
+
+          for (let i = 1; i < row.length; i++) {
+            const label = headerCells[i] ?? `Field ${i}`;
+            const value = row[i];
+            if (!value) continue;
+            writeParagraph(`${label}: ${value}`);
           }
-          y += 6;
+          y += 8;
         }
       }
 

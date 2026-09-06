@@ -8,6 +8,192 @@ export const metadata = {
 const h2 = "mt-10 mb-3 text-sm font-semibold uppercase tracking-wide text-[#6C3FD1]";
 const p = "mb-4 leading-[1.8]";
 
+const FEEDBACK_COLUMNS = [
+  "S.No",
+  "Feedback Given",
+  "Underlying Ask",
+  "What does it mean for us?",
+  "What type of failure is it?",
+  "Type of Request",
+  "Classification",
+  "Impact",
+  "Effort to build",
+  "Effort to build for this assignment",
+  "Priority to build in IRL",
+  "Priority to build in prototype",
+] as const;
+
+const FEEDBACK_ITEMS: string[][] = [
+  [
+    "1",
+    "“Candidates keep saying the AI sounds like it's reading a script when we screen for the restaurant manager roles. Feels robotic, not like a real conversation.”",
+    "I want Nova to have a more natural conversational style that encourages candidates to engage.",
+    "Candidates perceive Nova as scripted, which may reduce engagement.",
+    "Speaking failure",
+    "Conversation quality gap",
+    "Must have",
+    "Medium",
+    "Medium",
+    "High",
+    "P1",
+    "P2",
+  ],
+  [
+    "2",
+    "“Our engineering screens are going fine but I noticed Nova doesn't push back when a candidate gives a vague answer to a technical question. It just moves to the next question.”",
+    "I want Nova to challenge vague or incomplete candidate responses.",
+    "Nova is moving through questions without establishing sufficient evidence.",
+    "Reacting failure",
+    "Conversation quality gap",
+    "Must have",
+    "High",
+    "High",
+    "High",
+    "P2",
+    "P3",
+  ],
+  [
+    "3",
+    "“Can Nova ask follow-up questions based on what the candidate just said, instead of just going down a fixed list?”",
+    "I want Nova to ask relevant follow-up questions based on the candidate's responses to better assess their experience and fit.",
+    "Users want Nova to adapt to candidate responses rather than follow a fixed flow.",
+    "Reacting failure",
+    "Conversation quality gap",
+    "Must have",
+    "High",
+    "High",
+    "High",
+    "P2",
+    "P3",
+  ],
+  [
+    "4",
+    "“We had a candidate hang up mid-call for a tutor role screen. When we checked the transcript, Nova had asked 3 questions back to back without giving them room to actually finish talking.”",
+    "I want Nova to listen and respond appropriately so that the candidate is also happy in responding",
+    "Poor turn-taking can prevent candidates from fully expressing themselves.",
+    "Listening failure",
+    "Conversation quality gap",
+    "Must have",
+    "High",
+    "Medium",
+    "High",
+    "P1",
+    "P2",
+  ],
+  [
+    "5",
+    "“Love the product overall, huge time save. One thing, the confidence score for two candidates who I later hired myself both came back 'medium' when honestly they were clearly strong. Not sure what's driving that score.”",
+    "I want to understand whether Nova is accurately assessing candidates and what is driving the score.",
+    "There is a trust gap in the confidence score, but the root cause is unclear.",
+    "Need more info",
+    "Diagnostic",
+    "Must have",
+    "Need more info",
+    "Need more info",
+    "Need more info",
+    "P3",
+    "P2",
+  ],
+  [
+    "6",
+    "“Is there a way to have Nova sound different for different roles? Like, more formal for engineering, more warm for the tutor and frontline stuff. Right now it sounds the same for everything.”",
+    "I want Nova to adapt its tone and communication style to the role so that candidates feel more comfortable engaging in the conversation.",
+    "A single conversational style may not work across different candidate populations.",
+    "Speaking failure",
+    "Conversation quality gap",
+    "Must have",
+    "High",
+    "Medium",
+    "High",
+    "P1",
+    "P2",
+  ],
+  [
+    "7",
+    "“A candidate complained they weren't told upfront this was an AI, not a human. We do have the consent line at the start but I think it's getting glossed over too fast in the call.”",
+    "I want Nova to make the AI disclosure clear and ensure the candidate understands they're speaking with an AI before proceeding.",
+    "Important transparency information is not being communicated clearly enough.",
+    "Speaking failure",
+    "Conversation quality gap",
+    "Must have",
+    "High",
+    "Medium",
+    "High",
+    "P1",
+    "P2",
+  ],
+  [
+    "8",
+    "“We need Nova to handle candidates who ask questions back, like 'what's the salary range' or 'what's the team like.' Right now it just says it can't answer that and moves on, which feels weird and kills the vibe.”",
+    "I want Nova to handle candidate questions naturally and appropriately during the conversation.",
+    "Nova needs to become better at reacting to the candidate, rather than treating the interview as a one-way sequence of questions.",
+    "Reacting failure",
+    "Feature request",
+    "Good to have",
+    "Medium",
+    "Medium",
+    "High",
+    "P2",
+    "P3",
+  ],
+  [
+    "9",
+    "“For engineering candidates, when they mention a specific technology or project, Nova doesn't dig into it at all. Feels like a missed opportunity, a human recruiter would always ask more.”",
+    "Nova should recognize relevant information in an engineering candidate's answer and use it to ask a deeper, relevant follow-up question.",
+    "Nova is missing valuable signals volunteered by candidates.",
+    "Reacting failure",
+    "Conversation quality gap",
+    "Must have",
+    "High",
+    "High",
+    "High",
+    "P2",
+    "P3",
+  ],
+  [
+    "10",
+    "“Our restaurant manager screens are converting well, but our software engineer screens have a much lower pass-to-next-round rate than when our human recruiters used to do first screens. Not sure if it's the questions or the conversation itself.”",
+    "I want to understand why Nova's engineering screens underperform human-led screens and whether the issue is the questions or the conversation.",
+    "There is a measurable engineering screening gap, but we don't yet know whether questions or conversation are responsible.",
+    "Diagnostic",
+    "Diagnostic",
+    "Must have",
+    "Need more info",
+    "Need more info",
+    "Need more info",
+    "P2",
+    "P2",
+  ],
+  [
+    "11",
+    "“Small thing, but the AI's voice pace feels too fast when it's explaining next steps at the end of the call. A couple candidates asked us to repeat what happens next because they didn't catch it.”",
+    "I want Nova to communicate next steps clearly and at an appropriate pace so candidates understand what happens next.",
+    "Delivery quality can affect whether candidates understand important information.",
+    "Speaking failure",
+    "Conversation quality gap",
+    "Must have",
+    "Medium",
+    "Medium",
+    "High",
+    "P1",
+    "P2",
+  ],
+  [
+    "12",
+    "“Can we get a summary sent to us not just as a score, but as 2-3 lines on why the candidate got that score? Right now we just see 'Medium confidence' and nothing else.”",
+    "I want Nova to explain the evidence behind its confidence score so I can understand and trust the assessment",
+    "Recruiters need evidence behind the score to trust and act on it.",
+    "Scoring Failure",
+    "Feature request",
+    "Must have",
+    "High",
+    "Small",
+    "Low",
+    "P3",
+    "P1",
+  ],
+];
+
 export default function ThinkingPage() {
   return (
     <div className="min-h-screen bg-[#F7F5FC] print:bg-white">
@@ -33,11 +219,6 @@ export default function ThinkingPage() {
 
         <article id="thinking-content">
         <h2 className={h2}>How I approached this</h2>
-        <p className={p}>
-          I treated Nova as a goal seeking system. Any goal seeking system needs four things: a
-          goal, a clear image of what reaching that goal looks like, actions taken towards it, and
-          feedback that corrects the path. The idea comes from Maxwell Maltz.
-        </p>
         <p className={p}>
           Nova&apos;s goal is to replace the first round of screening a recruiter would otherwise
           do. So the first question is not what Nova gets wrong. It is what a good recruiter
@@ -67,29 +248,6 @@ export default function ThinkingPage() {
           candidates who sound confident, because confidence is the only signal they can read.
           This is also the default behaviour of a language model. A fluent answer reads as a
           strong answer. Nova, left alone, screens like a junior recruiter.
-        </p>
-
-        <h2 className={h2}>Why the score is the thing that matters</h2>
-        <p className={p}>
-          Screening is a decision under uncertainty, and the two errors do not cost the same.
-        </p>
-        <p className={p}>
-          Passing a weak candidate costs a wasted interview, lost hours for the hiring team, and
-          trust in the recruiter&apos;s judgement. If it keeps happening, the work moves to someone
-          more senior.
-        </p>
-        <p className={p}>
-          Rejecting a strong candidate costs nothing visible on the day. Over time it costs a
-          great deal. The role stays open. The department that raised the need suffers. The
-          workload shifts onto someone already employed, who is unfairly loaded because of a
-          decision made elsewhere. Recruiting is expensive, and the company pays again for a
-          candidate it already had.
-        </p>
-        <p className={p}>
-          A score with no stated reason cannot be audited. Neither error can be caught. That is
-          the failure the customer in item 5 described: two candidates scored medium, both later
-          hired directly by the manager. The manager did the screen himself, which removes the
-          reason Nova exists.
         </p>
 
         <h2 className={h2}>Themes</h2>
@@ -149,6 +307,39 @@ export default function ThinkingPage() {
           nothing. A well explained score drawn from a poor conversation is a well explained wrong
           answer.
         </p>
+
+        <h2 className={h2}>The feedback</h2>
+        <p className={p}>The twelve raw items referenced by number throughout this page.</p>
+        <div className="mb-4 overflow-x-auto rounded-md border border-[#6C3FD1]/20">
+          <table className="min-w-[1600px] border-collapse text-left text-xs leading-relaxed">
+            <thead>
+              <tr className="bg-[#6C3FD1]/10">
+                {FEEDBACK_COLUMNS.map((col) => (
+                  <th
+                    key={col}
+                    className="border-b border-[#6C3FD1]/20 px-3 py-2 font-semibold uppercase tracking-wide text-[#6C3FD1]"
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {FEEDBACK_ITEMS.map((row, i) => (
+                <tr key={i} className={i % 2 === 1 ? "bg-[#6C3FD1]/5" : undefined}>
+                  {row.map((cell, j) => (
+                    <td
+                      key={j}
+                      className="max-w-[260px] border-b border-[#6C3FD1]/10 px-3 py-2 align-top"
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         </article>
 
         <Link
