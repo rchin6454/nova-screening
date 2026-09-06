@@ -228,13 +228,13 @@ export default function ThinkingPage() {
           <h2 className={h2}>Appendix A: Feedback Classification</h2>
           <div className="relative left-1/2 right-1/2 mb-4 -mx-[50vw] w-screen px-6 print:static print:left-0 print:right-0 print:mx-0 print:w-full print:px-0">
             <div className="overflow-x-auto rounded-md border border-[#6C3FD1]/20">
-              <table className="min-w-[1900px] border-collapse text-left text-sm leading-relaxed">
+              <table className="min-w-[1450px] border-collapse text-left text-xs leading-relaxed">
                 <thead>
                   <tr className="bg-[#6C3FD1]/10">
                     {FEEDBACK_COLUMNS.map((col) => (
                       <th
                         key={col}
-                        className="border-b border-[#6C3FD1]/20 px-4 py-3 font-semibold uppercase tracking-wide text-[#6C3FD1]"
+                        className="border-b border-[#6C3FD1]/20 px-3 py-2 font-semibold uppercase tracking-wide text-[#6C3FD1]"
                       >
                         {col}
                       </th>
@@ -247,7 +247,7 @@ export default function ThinkingPage() {
                       {row.map((cell, j) => (
                         <td
                           key={j}
-                          className="max-w-[360px] border-b border-[#6C3FD1]/10 px-4 py-3 align-top"
+                          className="max-w-[280px] border-b border-[#6C3FD1]/10 px-3 py-2 align-top"
                         >
                           {cell}
                         </td>
