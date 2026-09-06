@@ -183,39 +183,54 @@ export default function ThinkingPage() {
 
           <h2 className={h2}>Part 2: Prioritisation</h2>
 
-          <h3 className={h3}>1. Conversation quality — P1 in real life</h3>
+          <p className={p}>Yes.</p>
+
+          <h3 className={h3}>1. Conversation quality &amp; candidate experience — P1 in real life</h3>
           <p className={p}>
-            Five of twelve items, both role families, every call. These decide whether a candidate
-            opens up and finishes the screen, which is Nova&apos;s core value. High impact, medium
-            effort, and far more actionable than changing the scoring model.
+            Five of twelve items across both role families point to Nova feeling scripted, rushed,
+            or insufficiently tailored. These issues directly affect whether candidates can engage,
+            finish the conversation, and understand important information. The table rates these as{" "}
+            <strong>high-priority, must-have improvements</strong>, with medium effort for most
+            items.
           </p>
 
-          <h3 className={h3}>2. Adaptive and reactive interviewing — P2 in real life</h3>
+          <h3 className={h3}>2. Adaptive &amp; reactive interviewing — P2 in real life</h3>
           <p className={p}>
-            Nova misses evidence when candidates are vague or volunteer something relevant. A
-            human recruiter probes these, and the absence may explain the weaker engineering
-            screens. Harder than fixing delivery, because Nova must interpret the answer and
-            decide what to ask next. High priority for the product, not the first thing to build.
+            Four items show that Nova follows the question flow rather than responding to what
+            candidates actually say. Candidates can give vague answers, volunteer relevant
+            experience, or ask questions, but Nova often moves on without probing. This is a{" "}
+            <strong>high-impact, must-have area</strong>, but also high effort because it requires
+            Nova to interpret candidate responses and adapt the conversation.
           </p>
 
-          <h3 className={h3}>3. Scoring and recruiter trust — P3 in real life, first as a prototype</h3>
+          <h3 className={h3}>3. Engineering screening effectiveness — P2 in real life</h3>
           <p className={p}>
-            Potentially the highest business cost, since a wrong assessment rejects a strong
-            candidate or advances a weak one. But the feedback does not say whether the score is
-            wrong, the evidence was thin, or the interview caused it. So I would not change the
-            scoring model. I would make the score explainable first. Smaller, buildable, and it
-            diagnoses the deeper problem.
+            The engineering screens have a measurable problem: their pass-to-next-round rate is
+            lower than it was with human recruiters. However, the feedback does not establish
+            whether the problem is the questions, conversation quality, or assessment itself. The
+            table therefore treats this as a{" "}
+            <strong>diagnostic issue requiring more information</strong>, rather than recommending
+            an immediate product fix.
+          </p>
+
+          <h3 className={h3}>4. Scoring &amp; recruiter trust — P3 in real life, P1 in prototype</h3>
+          <p className={p}>
+            Recruiters do not have enough visibility into what drives Nova&apos;s confidence score,
+            and there are examples where candidates later hired by recruiters received only a
+            medium score. The table identifies{" "}
+            <strong>scoring explanation as a small-effort, low-effort-for-assignment opportunity</strong>,
+            making it the highest-priority item to prototype even though the broader scoring/trust
+            theme is P3 for the real product.
           </p>
 
           <h3 className={h3}>Business priority against prototype priority</h3>
           <p className={p}>
-            My number one business priority is conversation quality. I am not building it, because
-            the brief excludes voice.
-          </p>
-          <p className={p}>
-            The next buildable opportunity is scoring explainability: take the candidate&apos;s
-            responses and the job requirements, produce a confidence score, and show the evidence
-            behind it.
+            The table separates what matters most for Nova&apos;s product from what is practical to
+            build in this assignment. <strong>Conversation quality &amp; candidate experience is the
+            P1 business priority</strong>, followed by adaptive/reactive interviewing. However, those
+            areas require more complex changes, while{" "}
+            <strong>scoring explanation is explicitly P1 for the prototype</strong> because it is a
+            smaller, more buildable feature.
           </p>
 
           <h2 className={h2}>Appendix A: Feedback Classification</h2>
